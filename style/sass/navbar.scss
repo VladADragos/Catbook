@@ -1,0 +1,77 @@
+.navbar {
+  width: 100%;
+  background: #003f61;
+  display: flex;
+  justify-content: space-between;
+  padding: 1vh 6vw;
+  align-items: center;
+  height: 10vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
+.header__logo {
+}
+
+.header__text {
+  color: white;
+  font-size: 5rem;
+  margin: 0px;
+}
+
+.button {
+  border: none;
+  align-self: flex-end;
+  padding: 0.81rem 4rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.header__link {
+}
+
+.login-form {
+  display: flex;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form__label {
+  font-size: 2rem;
+  color: white;
+}
+
+.button--login {
+  font-size: 2rem;
+}
+
+.form-input {
+  border: none;
+  padding: 0.8rem 1.2rem;
+}
+
+.margin--right {
+  margin-right: 1.5rem;
+}
+
+.margin--top {
+  margin-top: 2.5rem;
+}
+
+.button--secondary {
+  color: $white;
+  background: $secondary-button-color;
+}
+
+.form-label {
+}
+
+.login-form__input {
+  font-size: 1.8rem;
+}

@@ -1,0 +1,12 @@
+.footer {
+    background: #D3D3D3;
+    height: 7vh;
+    display: flex;
+    @include center();
+
+}
+
+.footer__text {
+    font-size: 1.5rem;
+    color: rgb(139, 139, 139);
+}
