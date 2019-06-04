@@ -35,4 +35,5 @@ const validateChars = (string) => {
 
 }
 
-console.log(!(4 === 0 || 4 === ""));
+
+

@@ -1,4 +1,3 @@
-
 <?php
 require "./connect.php";
 
@@ -49,7 +48,7 @@ function logInUser()
             $username = htmlentities($_POST['username']);
             $password = $_POST['password'];
 
-            $sql = "SELECT username,`password`,id,email,phoneNumber FROM users WHERE username=:username";
+            $sql = "SELECT username,`password`,id,email,phoneNumber,profilePicture FROM users WHERE username=:username";
 
             $stmt = $connection->prepare($sql);
 
@@ -58,11 +57,12 @@ function logInUser()
 
             if (password_verify($password, $user->password)) {
 
-                $_SESSION["username"]    = $user->username;
-                $_SESSION["isLoggedIn"]  = true;
-                $_SESSION["userId"]      = $user->id;
-                $_SESSION["email"]       = $user->email;
-                $_SESSION["phoneNumber"] = $user->phoneNumber;
+                $_SESSION["username"]       = $user->username;
+                $_SESSION["isLoggedIn"]     = true;
+                $_SESSION["userId"]         = $user->id;
+                $_SESSION["email"]          = $user->email;
+                $_SESSION["phoneNumber"]    = $user->phoneNumber;
+                $_SESSION["profilePicture"] = $user->profilePicture;
 
                 unset($_SESSION['errors']);
 
@@ -87,31 +87,33 @@ function registerUser()
     try {
         session_start();
 
-        $connection = connect();
+        $connection     = connect();
+        $profilePicture = $_POST['profile-picture'];
+        $username       = htmlentities($_POST['username']);
+        $email          = $_POST['email'];
+        $phoneNumber    = $_POST['phoneNumber'];
+        $password       = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-        $username    = htmlentities($_POST['username']);
-        $email       = $_POST['email'];
-        $phoneNumber = $_POST['phoneNumber'];
-        $password    = password_hash($_POST['password'], PASSWORD_DEFAULT);
-
-        $sql = 'INSERT INTO users (`id`, `username`, `password`, `email`, `phoneNumber`) VALUES (:id, :username, :password, :email, :phoneNumber)';
+        $sql = 'INSERT INTO users (`id`, `username`, `password`, `email`, `phoneNumber`, `profilePicture`)
+        VALUES (:id, :username, :password, :email, :phoneNumber, :profilePicture)';
 
         $stmt = $connection->prepare($sql);
 
-        $stmt->execute(['id' => null, 'username' => $username, 'password' => $password, 'email' => $email, 'phoneNumber' => $phoneNumber]);
+        $stmt->execute(['id' => null, 'username' => $username, 'password' => $password, 'email' => $email, 'phoneNumber' => $phoneNumber, 'profilePicture' => $profilePicture]);
 
-        $sql = "SELECT username,`password`,id,email,phoneNumber FROM users WHERE username=:username";
+        $sql = "SELECT username,`password`,id,email,phoneNumber, profilePicture FROM users WHERE username=:username";
 
         $stmt = $connection->prepare($sql);
 
         $stmt->execute(['username' => $username]);
         $user = $stmt->fetch();
 
-        $_SESSION["username"]    = $user->username;
-        $_SESSION["userId"]      = $user->id;
-        $_SESSION["email"]       = $user->email;
-        $_SESSION["phoneNumber"] = $user->phoneNumber;
-        $_SESSION["isLoggedIn"]  = true;
+        $_SESSION["username"]       = $user->username;
+        $_SESSION["userId"]         = $user->id;
+        $_SESSION["email"]          = $user->email;
+        $_SESSION["phoneNumber"]    = $user->phoneNumber;
+        $_SESSION["profilePicture"] = $user->profilePicture;
+        $_SESSION["isLoggedIn"]     = true;
 
         unset($_SESSION['errors']);
         $connection = null;
@@ -223,6 +225,65 @@ function edit()
 
 }
 
+function post()
+{
+    try {
+        session_start();
+
+        $connection = connect();
+
+        $posterId = $_POST['id'];
+        $content  = $_POST['text'];
+        $postId   = uniqid("", true);
+
+        $storageDirectory = "./images/post/";
+        $file             = $_FILES['image'];
+        $fileName         = $file['name'];
+        $fileTmpName      = $file['tmp_name'];
+        $fileSize         = $file['size'];
+        $fileError        = $file['error'];
+        $fileType         = $file['type'];
+
+        $fileExt       = explode('.', $fileName);
+        $fileActualExt = strtolower(end($fileExt));
+        $allowedSize   = 500000;
+
+        $allowedExts = array('jpg', 'jpeg', 'png', 'pdf');
+
+        if (in_array($fileActualExt, $allowedExts)) {
+            if ($fileError === 0) {
+                if ($fileSize < $allowedSize) {
+                    $imageName       = uniqid("", true);
+                    $uploadFileName  = $imageName . "." . $fileActualExt;
+                    $fileDestination = $storageDirectory . $uploadFileName;
+                    $sql             = 'INSERT INTO `posts` (`id`, `posterId`, `content`, `timestamp`, `pictureName`) VALUES (:id, :posterId, :content, :timestamp, :pictureName)';
+
+                    $stmt = $connection->prepare($sql);
+
+                    $stmt->execute(['id' => null, 'posterId' => $posterId, 'content' => $content, 'timestamp' => null, 'pictureName' => $uploadFileName]);
+
+                    $connection = null;
+
+                    move_uploaded_file($fileTmpName, $fileDestination);
+                    echo ("sucess");
+                    header('Location: ./logged.php');
+
+                } else {
+                    echo ("error file to big");
+                }
+            } else {
+                echo ("error uploading");
+            }
+
+        } else {
+            echo ("error wrong extension");
+        }
+
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
 end($_REQUEST);
 $request = key($_REQUEST);
 
@@ -242,6 +303,9 @@ switch ($request) {
         break;
     case 'befriend-button':
         befriend();
+        break;
+    case 'post-button':
+        post();
         break;
     case 'edit-button':
         edit();
