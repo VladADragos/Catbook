@@ -284,6 +284,33 @@ function post()
     }
 }
 
+function comment()
+{
+    var_dump($_REQUEST);
+    echo ("<br>");
+
+    //INSERT INTO `comments` (`id`, `commentatorId`, `postId`, `content`, `timestamp`) VALUES (NULL, '1', '2', 'text', CURRENT_TIMESTAMP);
+
+    try {
+        session_start();
+
+        $connection  = connect();
+        $commenterId = $_POST['commenterId'];
+        $postId      = $_POST['postId'];
+        $comment     = $_POST['comment'];
+
+        $sql = 'INSERT INTO `comments` (`id`, `commenterId`, `postId`, `comment`, `timestamp`) VALUES (:id, :commenterId, :postId, :comment, :timestamp)';
+
+        $stmt = $connection->prepare($sql);
+
+        $stmt->execute(['id' => null, 'commenterId' => $commenterId, 'postId' => $postId, 'comment' => $comment, 'timestamp' => null]);
+        header('Location: ./logged.php');
+
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
 end($_REQUEST);
 $request = key($_REQUEST);
 
@@ -310,8 +337,11 @@ switch ($request) {
     case 'edit-button':
         edit();
         break;
+    case 'comment-button':
+        comment();
+        break;
     default;
-        //header('Location: ./index.php');
+        header('Location: ./index.php');
         break;
 
 }

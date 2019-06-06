@@ -39,5 +39,5 @@ try {
 
 
 
-    <?php require "./partials/comment.php"; ?>
+    <?php require "./partials/comments.php"; ?>
 </section>

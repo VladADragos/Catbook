@@ -1,6 +1,6 @@
 <?php session_start(); ?>
 <?php
-
+// $GLOBALS['profilePicturesDir'] = "./images/defaultProfilePictures/";
 if (isset($_SESSION["isLoggedIn"]) && isset($_SESSION["isLoggedIn"])) {
     header('Location: logged.php');
 } ?>

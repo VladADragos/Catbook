@@ -8,13 +8,25 @@ $name   = $_SESSION["username"];
 $userId = $_SESSION["userId"];
 require "./connect.php";
 $connection = connect();
-$sql        = "SELECT friendId,friendName FROM friends WHERE userId=$userId";
+
+$friends = [];
+$sql     = "SELECT friendId,friendName FROM friends WHERE userId=$userId";
 
 $stmt = $connection->prepare($sql);
 
 $stmt->execute();
-$friends    = $stmt->fetchAll();
+$friends = $stmt->fetchAll();
+
+$sql = "SELECT userId,friendName FROM friends WHERE friendId=$userId";
+
+$stmt = $connection->prepare($sql);
+
+$stmt->execute();
+
+$friends = array_merge($friends, $stmt->fetchAll());
+
 $connection = null;
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
