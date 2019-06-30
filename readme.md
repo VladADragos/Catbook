@@ -1,8 +1,9 @@
-# finished working version 1.0
+# Catbook, the cat themed social network
+##finished working version 1.0
 
 [website](www.catbook.se)
 
-## Features
+### Features
 - Meowww(cat theme)
 - User registration
 - User login/logout
