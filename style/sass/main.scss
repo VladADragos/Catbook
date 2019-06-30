@@ -30,10 +30,44 @@ a {
 @import "navbar.scss";
 @import "post.scss";
 @import "edit.scss";
+.button {
+  border: none;
+  outline: none;
+  color: $white;
+  background: #e2e2e2;
+  margin: 0rem;
+  padding: 0.81rem 4rem;
+  cursor: pointer;
+  
+  font-weight: 600;
+}
+.button--clear{
+  border: none;
+  background: none;
+  padding: 0rem;
+  margin: 0rem;
+  outline: none;
+  cursor: pointer;
+}
+.button--delete{
+background: none;
+font-weight: 600;
+padding: .2rem;
+border: none;
+
+&:hover{
+  text-decoration: underline;
+}
+}
 .register-form__header {
   color:  hsl(0, 0%, 100%);
   font-size: 3.5rem;
   margin-bottom: 1rem;
+}
+
+
+.searched-user__image{
+  height: 10vh;
 }
 //#E9EBEE
 //#E9EBEE
@@ -45,6 +79,20 @@ a {
 
   height: 83vh;
   align-items: center;
+}
+button{
+  display: flex;
+  align-items: center;
+}
+.button--logout{
+  font-size: 2.2rem;
+  font-weight: 500;
+  background: hsl(201, 20%, 54%);
+  // padding: 1.5rem 2.5rem;
+  color: $white;
+}
+.button--login{
+  align-self: flex-end;
 }
 
 .register-form {
@@ -65,17 +113,39 @@ a {
 .register-form__input {
   font-size: 2rem;
 }
+.button--secondary{
+  background: $secondary-button-color;
 
-.button--primary {
-  color: $white;
-  background: $primary-button-color;
-  
 }
-
+.button--select{
+  // background: #002133;
+  background: hsl(201, 19%, 70);
+  color: $white;
+  font-size: 2rem;
+  font-weight: 600;
+  // border: 3px solid red;
+  padding: .8rem 1.6rem;
+  align-self: flex-start;
+}
+.button--primary {
+  background: $primary-button-color;
+}
+.register-form__display-img{
+  height: 25vh;
+  width: 25vh;
+  margin-top: 1rem;
+  opacity: .65;
+  // align-self: center;
+}
 .button--register {
-  font-size: 2.5rem;
+  font-size: 3rem;
   padding: 1rem 2rem;
+  box-shadow: 0 1rem 2rem hsla(0, 0%, 0%, 0.212), 0 .6rem .6rem hsla(0, 0%, 0%, 0.212);
   margin-top: 2rem;
+  justify-self: center;
+  background:hsl(200, 95%, 15%)
+}
+.material-icons{
 }
 .search-form__input {
   font-size: 2.2rem;
@@ -84,11 +154,58 @@ a {
 }
 .button--search {
   font-size: 2.2rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   margin-left: 1rem;
+
 }
 
 .search-form {
   display: flex;
+}
+@keyframes textError{
+  0%{
+    transform: translateX(-70px);
+  }
+  20%{
+    transform: translateX(70px);
+  }
+  30%{
+    transform: translateX(0px);
+
+  }
+  75%{
+    opacity: 1;
+
+  }
+  100%{
+opacity: 0;
+  }
+}
+
+.button--add-friend{
+background: #83afc7;
+color: white;
+padding: .5rem 1rem;
+&:hover{
+  background: #5a8da9;
+}
+}
+.searched-user__befreind-icon{
+  font-size: 3rem;
+  
+}
+
+.error{
+  top: 100%;
+  z-index: 100;
+  left: 0%;
+  font-size: 2rem;
+  background: #f14141af;
+  padding: .5rem;
+  color: $white;
+  position: absolute;
+  animation: textError 3s ease forwards;
 }
 
 @import "footer.scss";
@@ -103,6 +220,17 @@ a {
   justify-content: space-between;
 }
 
+
+
+.user-info{
+margin: 2rem 0rem;
+}
+.user-info__header{
+  font-size: 1.8rem;
+}
+.user-info__text{
+  font-size: 1.4rem;
+}
 .user-profile {
   background: #f6f6f6;
   width: 22%;
@@ -114,42 +242,71 @@ a {
   position: sticky;
   box-shadow: 0 5px 10px rgba(0,0,0,0.19);
 }
+
 .user {
-  background: #044e76;
   height: 45%;
   display: flex;
+  border-radius: 1rem;
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
 }
+
+.more--post{
+  align-self: center;
+}
+
+
+
+
+
+@import "more.scss";
+
+
 .user__header {
   font-size: 4rem;
-  font-weight: 400;
-  color: $white;
+  font-weight: 600;
+  color: $black;
 }
 
 .user__image {
-  height: 55%;
-  //border-radius: 8rem;
+  height: 65%;
+  border-radius: 12rem;
+  // border: .5rem solid hsl(201,20%,20%);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.19),0 5px 10px rgba(0, 0, 0, 0.19) ;
 }
 
 .friends {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   overflow-y: scroll;
-  height: 50%;
+  height: 40%;
 }
 .friend {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 1.2rem;
+  position: relative;
 }
 
+.friends__header {
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: #6b6b6b;
+}
 .friend__header {
+  font-weight: 600;
+  color: $black;
+  font-size: 1.8rem;
+  &:hover{
+    text-decoration: underline;
+
+  }
 }
 
 .friend__image {
-  height: 60px;
+  height: 6rem;
+  border-radius: 6rem;
 }
 .friend__more-button {
 }
@@ -176,7 +333,7 @@ a {
 .searched-user__image {
 }
 .searched-user__link {
-  color: black;
+  color: rgb(0, 0, 0);
   font-size: 3rem;
 }
 
@@ -187,12 +344,14 @@ a {
   flex-direction: column;
 }
 .post-area{
-  background: #E0E0E0;
+  background: rgb(246, 246, 246);
   width: 100%;
   // height: 33vh;
   display: flex;
   flex-direction: column;
   padding: 4rem;
+  margin-bottom: 5rem;
+  position: relative;
   box-shadow: 0 5px 10px rgba(0,0,0,0.19);
 }
 .post-area__header{
@@ -236,13 +395,68 @@ a {
 
 }
 
-.image-input__icon{
-  font-size: 4rem;
-  color: #444444;
+.image-error-animation{
+  animation: errorImage 1s ease;
+}
+
+.image-loaded-animation{
+  animation: imageLoaded 1s ease forwards;
+}
+
+@keyframes imageLoaded{
+  0%{
+    transform: scale(1);
+    color: #a3b7c1;
+
+  }
+
+  50%{
+    transform: scale(.7);
+  }
+  100%{
+    transform: scale(1);
+    color: #143d51;
+  }
+}
+
+@keyframes errorImage{
+  0%{
+    transform: rotate(0deg);
+  }
+  25%{
+    transform: rotate(30deg);
+  }
+  75%{
+    transform: rotate(-30deg);
+  }
+  100%{
+    transform: rotate(0deg);
+  }
+}
+
+.image-input__label{
+  // #
+  display: flex;
+  align-items: center;
   margin-left: 1rem;
   
 
 }
+.button--comment{
+font-weight: 500;
+}
+.comment__icon{
+  font-size: 1.5rem;
+  margin-right: .3rem;
+}
+.image-input__icon{
+  color:#a3b7c1 ;
+  // #
+  font-size: 4rem;
+  
+
+}
+
 .post-form__image-input{
   display: none;
 

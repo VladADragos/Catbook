@@ -2,17 +2,16 @@
 
 session_start();
 
+require_once "./connect.php";
 if (!isset($_SESSION["isLoggedIn"])) {
     header('Location: ./index.php');
 }
 $name                    = $_SESSION["username"];
 $_SESSION["isSearching"] = true;
 $id                      = $_SESSION["userId"];
-
 if (isset($_POST['search-button'])) {
 
     try {
-        require "./connect.php";
         $connection = connect();
 
         $username = htmlentities($_POST['search-input']);
@@ -24,17 +23,32 @@ if (isset($_POST['search-button'])) {
             $searchParameter = "phoneNumber";
         }
 
-        $sql = "SELECT * FROM users WHERE $searchParameter LIKE :username";
+        $sql = "SELECT id,username,profilePicture FROM users WHERE $searchParameter LIKE :username";
 
         $stmt = $connection->prepare($sql);
         $stmt->execute(['username' =>
             "$username%"]);
-        $users      = $stmt->fetchAll();
-        $connection = null;
+        $users = $stmt->fetchAll();
+
+        $_SESSION['searchBuffer'] = $users;
+        $connection               = null;
 
     } catch (PDOException $e) {
         echo "<br>" . $e->getMessage();
     }
+}
+
+function isNotFriend($friendId)
+{
+    $connection = connect();
+    $sql        = "SELECT * FROM `friends` WHERE `friends`.`userId` =:friendId AND `friends`.`friendId` =:userId OR `friends`.`userId` =:userId AND `friends`.`friendId` =:friendId";
+
+    $stmt = $connection->prepare($sql);
+
+    $stmt->execute(['userId' => $_SESSION['userId'], 'friendId' => $friendId]);
+    $friend = $stmt->fetchAll();
+
+    return $friend == null;
 }
 
 ?>
@@ -53,42 +67,46 @@ if (isset($_POST['search-button'])) {
         <?php require "./partials/navbar.php" ?>
         <div class="users">
 
-            <section class="searched-user">
+<?php if (!isset($_SESSION['searchBuffer'])) { ?>
+<h4>No users found</h4>
+<?php } ?>
 
-                <label for="username">username</label><input form="search-form" name="username" id="username"
-                    type="checkbox">
-                <label for="phoneNumber">phone number</label><input form="search-form" name="phoneNumber"
-                    id="phoneNumber" type="checkbox">
-                <label for="email">email</label><input form="search-form" name="email" id="email" type="checkbox">
-                <?php if (isset($_POST['all'])) {
-    echo "all";
-} elseif (isset($_POST['some'])) {
-    echo "some";
-}
-
-?>
             </section>
-            <?php if (isset($_POST['search-button']) && isset($users)) { ?>
-            <?php foreach ($users as $user) { ?>
+            <?php if (isset($_SESSION['searchBuffer'])) { ?>
+            <?php foreach ($_SESSION['searchBuffer'] as $user) { ?>
 
+
+
+
+
+
+
+                <?php if ($user->id !== $_SESSION['userId']) { ?>
             <section class="searched-user">
-                <img class="searched-user__image" src="https://picsum.photos/80/80/?random">
-                <a class="searched-user__link"
-                    href="user.php/<?php echo $user->username; ?>"><?php echo $user->username; ?></a>
-                <form action="./process.php" method="POST" name="befriend-form" id="befriend-form">
+                    <a class="temp" href="./user.php?user=<?php echo ($user->id); ?>">
+                    <img class="searched-user__image" src="./images/defaultProfilePictures/<?php echo ($user->profilePicture); ?>">
+                    </a>
 
+                    <a href="./user.php?user=<?php echo ($user->id); ?>">
+                    <h4 class="searched-user__link"><?php echo $user->username; ?></h4>
+                    </a>
+                    <?php if (isNotFriend($user->id)) { ?>
 
-                    <input type="hidden" name="userId" value=<?php echo "$id"; ?>> <!-- userId -->
-                    <input type="hidden" name="friendId" value=<?php echo "$user->id"; ?>> <!-- friendId -->
-                    <input type="hidden" name="friendName" value=<?php echo "$user->username"; ?>> <!-- friendName -->
-                    <button name="befriend-button" type="submit" from="befriend-form">
+                        <form action="./process.php" method="POST" name="befriend-form" id="befriend-form">
+                    <input type="hidden" name="userId" value="<?php echo ($_SESSION["userId"]); ?>">
+                    <input type="hidden" name="friendId" value=<?php echo "$user->id"; ?>>
+                    <input type="hidden" name="friendName" value=<?php echo "$user->username"; ?>>
+                    <button name="befriend-button" type="submit" from="befriend-form" class="button button--add-friend">
 
-                        <?php require "./images/add-friend.svg"; ?>
+                        <i class="material-icons searched-user__befreind-icon">person_add</i>
                     </button>
                 </form>
-
+                    <?php } else { ?>
+                    <p></p>
+                <?php } ?>
 
             </section>
+                <?php } ?>
             <?php } ?>
             <?php } ?>
         </div>

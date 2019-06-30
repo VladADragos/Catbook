@@ -1,9 +1,16 @@
 <?php session_start(); ?>
 <?php
-// $GLOBALS['profilePicturesDir'] = "./images/defaultProfilePictures/";
 if (isset($_SESSION["isLoggedIn"]) && isset($_SESSION["isLoggedIn"])) {
     header('Location: logged.php');
-} ?>
+}
+if (!isset($_SESSION['errors'])) {
+
+    $_SESSION['errors'] = ['userExists' => false, 'username' => false, 'password' => false, 'loginUsername' => false, 'loginPassword' => false];
+}
+
+// unset($_SESSION['errors']);
+// var_dump($_SESSION['errors']); ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,7 +26,7 @@ if (isset($_SESSION["isLoggedIn"]) && isset($_SESSION["isLoggedIn"])) {
             <!-- Navbar -->
             <?php require "./partials/navbar.php"; ?>
             <!-- Body -->
-            <?php require "./partials/login-main.php"; ?>
+            <?php require "./partials/register.php"; ?>
             <!-- Footer -->
             <?php require "./partials/footer.php"; ?>
 

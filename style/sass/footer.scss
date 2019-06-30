@@ -1,12 +1,14 @@
+@import "variables.scss";
 .footer {
-    background: #D3D3D3;
+    background: hsl(200, 21%, 28%);
     height: 7vh;
     display: flex;
-    @include center();
+    align-items: center;
+    justify-content: center;
 
 }
 
 .footer__text {
     font-size: 1.5rem;
-    color: rgb(139, 139, 139);
+    color: rgb(206, 206, 206);
 }

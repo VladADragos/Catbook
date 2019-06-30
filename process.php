@@ -1,22 +1,28 @@
 <?php
 require "./connect.php";
+$maxUserLen    = 20;
+$maxPassLen    = 30;
+$maxCommentLen = 80;
+$maxPostLen    = 150;
 
-function validate($in)
+function validate($in, $field, $length = 20, $strict = true)
 {
-    if (isset($in) && ((strlen(strip_tags($in)) > 3) && (strlen(strip_tags($in)) <= 15))) {
-        // Kollar om det finns HTML-taggar
-        if (strlen($in) != strlen(strip_tags($in))) {
-            $_SESSION['errors'] = "HTML taggar hittades";
+    $patern = $strict ? "/[\s\\\/\<\>]/" : "/[\\\/\<\>]/";
+
+    if (isset($in)) {
+        if (strlen(strip_tags($in)) > $length) {
+            $_SESSION['errors'][$field] = "To long, max length is " . $length;
+
             return false;
         }
-        // Matchar mot ett regulgärt uttryck
-        if (preg_match("/[\s \\ \/]/", $in)) {
-            // Om det matchar, hittas
-            $_SESSION['errors'] = "Förbjudna tecken hitades";
+
+        if (preg_match($patern, $in) || strlen($in) != strlen(strip_tags($in))) {
+            $_SESSION['errors'][$field] = "s \ / < > or spaces not allowed";
+
             return false;
         }
     } else {
-        $_SESSION['errors'] = "Antal tecken " . strlen($in) . " vilket inte är tillåtet";
+        $_SESSION['errors'][$field] = "Field can not be empty";
         return false;
     }
     return true;
@@ -24,100 +30,126 @@ function validate($in)
 
 function logOutUser()
 {
-    if (isset($_POST['logout-button'])) {
 
-        session_start();
-        if ($_SESSION["isLoggedIn"]) {
-            session_destroy();
-            header('Location: ./index.php');
-        }
-
+    session_start();
+    if (isset($_SESSION["isLoggedIn"]) && $_SESSION["isLoggedIn"]) {
+        session_destroy();
     }
+
+    header('Location: ./index.php');
+
 }
 
 function logInUser()
 {
+    global $maxPassLen, $maxUserLen;
     session_start();
+    if (validate($_POST['username'], 'loginUsername', $maxUserLen)) {
+        $_POST['errors']['loginUsername'] = false;
+        if (validate($_POST['password'], 'loginPassword', $maxPassLen)) {
+            try {
 
-    if (validate($_POST['username']) && validate($_POST['password'])) {
+                $connection = connect();
 
-        try {
+                $username = htmlentities($_POST['username']);
+                $password = $_POST['password'];
 
-            $connection = connect();
+                $sql = "SELECT username,`password`,id,profilePicture FROM users WHERE username=:username";
 
-            $username = htmlentities($_POST['username']);
-            $password = $_POST['password'];
+                $stmt = $connection->prepare($sql);
 
-            $sql = "SELECT username,`password`,id,email,phoneNumber,profilePicture FROM users WHERE username=:username";
+                $stmt->execute(['username' => $username]);
+                $user = $stmt->fetch();
+                if ($user == null) {
+                    $_SESSION['errors']['loginUsername'] = "User does not exist";
+                } else {
 
-            $stmt = $connection->prepare($sql);
+                    if (password_verify($password, $user->password)) {
+                        $_SESSION['errors']         = null;
+                        $_SESSION["username"]       = $user->username;
+                        $_SESSION["isLoggedIn"]     = true;
+                        $_SESSION["userId"]         = $user->id;
+                        $_SESSION["profilePicture"] = $user->profilePicture;
 
-            $stmt->execute(['username' => $username]);
-            $user = $stmt->fetch();
+                        var_dump($_SESSION['errors']);
+                        header('Location: logged.php');
+                        return;
+                    } else {
+                        $_SESSION['errors']['loginUsername'] = "Wrong password or username";
 
-            if (password_verify($password, $user->password)) {
+                    }
+                    $connection = null;
 
-                $_SESSION["username"]       = $user->username;
-                $_SESSION["isLoggedIn"]     = true;
-                $_SESSION["userId"]         = $user->id;
-                $_SESSION["email"]          = $user->email;
-                $_SESSION["phoneNumber"]    = $user->phoneNumber;
-                $_SESSION["profilePicture"] = $user->profilePicture;
+                }
 
-                unset($_SESSION['errors']);
-
-                header('Location: logged.php');
-
-            } else {
-                header('Location: index.php');
-
-                $_SESSION['errors'] = "Wrong password or username";
-
+            } catch (PDOException $e) {
+                echo "<br>" . $e->getMessage();
             }
-            $connection = null;
-
-        } catch (PDOException $e) {
-            echo "<br>" . $e->getMessage();
         }
+
     }
+    header("Location: " . $_SERVER['HTTP_REFERER']);
 }
 
 function registerUser()
 {
+    global $maxPassLen, $maxUserLen;
     try {
         session_start();
 
         $connection     = connect();
         $profilePicture = $_POST['profile-picture'];
         $username       = htmlentities($_POST['username']);
-        $email          = $_POST['email'];
-        $phoneNumber    = $_POST['phoneNumber'];
         $password       = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-        $sql = 'INSERT INTO users (`id`, `username`, `password`, `email`, `phoneNumber`, `profilePicture`)
-        VALUES (:id, :username, :password, :email, :phoneNumber, :profilePicture)';
-
-        $stmt = $connection->prepare($sql);
-
-        $stmt->execute(['id' => null, 'username' => $username, 'password' => $password, 'email' => $email, 'phoneNumber' => $phoneNumber, 'profilePicture' => $profilePicture]);
-
-        $sql = "SELECT username,`password`,id,email,phoneNumber, profilePicture FROM users WHERE username=:username";
+        $sql = "SELECT username FROM users WHERE username=:username";
 
         $stmt = $connection->prepare($sql);
 
         $stmt->execute(['username' => $username]);
         $user = $stmt->fetch();
 
-        $_SESSION["username"]       = $user->username;
-        $_SESSION["userId"]         = $user->id;
-        $_SESSION["email"]          = $user->email;
-        $_SESSION["phoneNumber"]    = $user->phoneNumber;
-        $_SESSION["profilePicture"] = $user->profilePicture;
-        $_SESSION["isLoggedIn"]     = true;
+        if ($user == null) {
+            $_SESSION['errors']['userExists'] = false;
+            if (validate($_POST['username'], 'username', $maxUserLen)) {
 
-        unset($_SESSION['errors']);
-        $connection = null;
-        header('Location: ./logged.php');
+                $_SESSION['errors']['username'] = false;
+                echo ("pass valid");
+                var_dump(validate($_POST['password'], 'password'));
+
+                if (validate($_POST['password'], 'password', $maxPassLen)) {
+
+                    unset($_SESSION['errors']);
+
+                    $sql = 'INSERT INTO users (`id`, `username`, `password`, `profilePicture`)
+                            VALUES (:id, :username, :password,  :profilePicture)';
+
+                    $stmt = $connection->prepare($sql);
+
+                    $stmt->execute(['id' => null, 'username' => $username, 'password' => $password, 'profilePicture' => $profilePicture]);
+
+                    $sql = "SELECT username,`password`,id, profilePicture FROM users WHERE username=:username";
+
+                    $stmt = $connection->prepare($sql);
+
+                    $stmt->execute(['username' => $username]);
+                    $user = $stmt->fetch();
+
+                    $_SESSION["username"]       = $user->username;
+                    $_SESSION["userId"]         = $user->id;
+                    $_SESSION["profilePicture"] = $user->profilePicture;
+                    $_SESSION["isLoggedIn"]     = true;
+
+                    $connection = null;
+                    header("Location: " . $_SERVER['HTTP_REFERER']);
+
+                }
+            }
+        } else {
+            $_SESSION['errors']['userExists'] = 'user already exists';
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+        }
+        header("Location: " . $_SERVER['HTTP_REFERER']);
 
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
@@ -146,7 +178,6 @@ function search()
             $res .= "$user->username, ";
         }
         echo $res;
-        //var_dump($stmt);
         $connection = null;
 
     } catch (PDOException $e) {
@@ -159,33 +190,27 @@ function befriend()
 {
     try {
 
-        $connection   = connect();
-        $requester    = $_POST['userId'];
-        $receiver     = $_POST['friendId'];
-        $receiverName = $_POST['friendName'];
-
-        $sql = 'INSERT INTO `friends` (`id`, `userId`, `friendId`, `friendName`) VALUES (:id, :userId, :friendId,:friendName)';
+        $connection = connect();
+        $requester  = $_POST['userId'];
+        $receiver   = $_POST['friendId'];
+        $sql        = 'INSERT INTO `friends` (`id`, `userId`, `friendId`) VALUES (:id, :userId, :friendId)';
 
         $stmt = $connection->prepare($sql);
 
-        $stmt->execute(['id' => null, 'userId' => $requester, 'friendId' => $receiver, 'friendName' => $receiverName]);
-
-        header('Location: ./logged.php');
+        $stmt->execute(['id' => null, 'userId' => $requester, 'friendId' => $receiver]);
+        var_dump($_POST);
 
         $connection = null;
+        header("Location: ./search.php");
 
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
 
-    $connection = null;
-
 }
 
 function edit()
 {
-
-    // UPDATE `users` SET `username` = 'vlad1', `phoneNumber` = '705172458', `email` = 'vlad66@yahoo.com' WHERE `users`.`id` = 14;
 
     try {
         session_start();
@@ -217,7 +242,7 @@ function edit()
 
         unset($_SESSION['errors']);
         $connection = null;
-        header('Location: ./logged.php');
+        header("Location: " . $_SERVER['HTTP_REFERER']);
 
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
@@ -227,57 +252,65 @@ function edit()
 
 function post()
 {
+    global $maxPostLen;
     try {
         session_start();
-
         $connection = connect();
 
-        $posterId = $_POST['id'];
-        $content  = $_POST['text'];
-        $postId   = uniqid("", true);
-
+        $posterId         = $_POST['id'];
+        $content          = $_POST['text'];
+        $postId           = uniqid("", true);
         $storageDirectory = "./images/post/";
         $file             = $_FILES['image'];
-        $fileName         = $file['name'];
-        $fileTmpName      = $file['tmp_name'];
-        $fileSize         = $file['size'];
-        $fileError        = $file['error'];
-        $fileType         = $file['type'];
 
-        $fileExt       = explode('.', $fileName);
-        $fileActualExt = strtolower(end($fileExt));
-        $allowedSize   = 500000;
+        $_SESSION['errors']['postImage'] = false;
+        if (validate($_POST['text'], "post", $maxPostLen, false)) {
+            $_SESSION['errors']['post'] = false;
+            if (isset($file) && $file['size'] !== 0) {
+                $fileName    = $file['name'];
+                $fileTmpName = $file['tmp_name'];
+                $fileSize    = $file['size'];
+                $fileError   = $file['error'];
+                $fileType    = $file['type'];
 
-        $allowedExts = array('jpg', 'jpeg', 'png', 'pdf');
+                $fileExt       = explode('.', $fileName);
+                $fileActualExt = strtolower(end($fileExt));
+                $allowedSize   = 500000;
 
-        if (in_array($fileActualExt, $allowedExts)) {
-            if ($fileError === 0) {
-                if ($fileSize < $allowedSize) {
-                    $imageName       = uniqid("", true);
-                    $uploadFileName  = $imageName . "." . $fileActualExt;
-                    $fileDestination = $storageDirectory . $uploadFileName;
-                    $sql             = 'INSERT INTO `posts` (`id`, `posterId`, `content`, `timestamp`, `pictureName`) VALUES (:id, :posterId, :content, :timestamp, :pictureName)';
+                $allowedExts = array('jpg', 'jpeg', 'png', 'pdf', 'webp');
+                if (in_array($fileActualExt, $allowedExts)) {
+                    if ($fileError === 0) {
+                        if ($fileSize < $allowedSize) {
+                            $imageName       = uniqid("", true);
+                            $uploadFileName  = $imageName . "." . $fileActualExt;
+                            $fileDestination = $storageDirectory . $uploadFileName;
+                            $sql             = 'INSERT INTO `posts` (`id`, `posterId`, `content`, `timestamp`, `pictureName`) VALUES (:id, :posterId, :content, :timestamp, :pictureName)';
 
-                    $stmt = $connection->prepare($sql);
+                            $stmt = $connection->prepare($sql);
 
-                    $stmt->execute(['id' => null, 'posterId' => $posterId, 'content' => $content, 'timestamp' => null, 'pictureName' => $uploadFileName]);
+                            $stmt->execute(['id' => null, 'posterId' => $posterId, 'content' => $content, 'timestamp' => null, 'pictureName' => $uploadFileName]);
 
-                    $connection = null;
+                            $connection = null;
 
-                    move_uploaded_file($fileTmpName, $fileDestination);
-                    echo ("sucess");
-                    header('Location: ./logged.php');
+                            move_uploaded_file($fileTmpName, $fileDestination);
+                            unset($_SESSION['errors']);
+                            echo ("sucess");
+                        } else {
+                            $_SESSION['errors']['postImage'] = "Image to big, max allowed size " . $allowedSize / 1000 . "kB / " . ($allowedSize / 10 ** 6) . " MB";
+                        }
+                    } else {
+                        echo ("error uploading");
+                    }
 
                 } else {
-                    echo ("error file to big");
+                    $_SESSION['errors']['postImage'] = "Image type not allowed, use jpg, jpeg, png or pdf";
                 }
             } else {
-                echo ("error uploading");
-            }
 
-        } else {
-            echo ("error wrong extension");
+                $_SESSION['errors']['postImage'] = "Image not selected";
+            }
         }
+        header("Location: " . $_SERVER['HTTP_REFERER']);
 
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
@@ -286,35 +319,141 @@ function post()
 
 function comment()
 {
-    var_dump($_REQUEST);
-    echo ("<br>");
+    global $maxCommentLen;
+    session_start();
 
-    //INSERT INTO `comments` (`id`, `commentatorId`, `postId`, `content`, `timestamp`) VALUES (NULL, '1', '2', 'text', CURRENT_TIMESTAMP);
+    if (validate($_POST['comment'], "comment", $maxCommentLen, false)) {
+        $_SESSION['errors']['comment'] = false;
+        try {
 
+            $connection  = connect();
+            $commenterId = $_POST['commenterId'];
+            $postId      = $_POST['postId'];
+            $comment     = $_POST['comment'];
+
+            $sql = 'INSERT INTO `comments` (`id`, `commenterId`, `postId`, `comment`, `timestamp`) VALUES (:id, :commenterId, :postId, :comment, :timestamp)';
+
+            $stmt = $connection->prepare($sql);
+
+            $stmt->execute(['id' => null, 'commenterId' => $commenterId, 'postId' => $postId, 'comment' => $comment, 'timestamp' => null]);
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            // var_dump();
+
+        } catch (PDOException $e) {
+            echo $sql . "<br>" . $e->getMessage();
+        }
+    } else {
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+
+    }
+}
+
+function deleteComment()
+{
     try {
         session_start();
-
         $connection  = connect();
-        $commenterId = $_POST['commenterId'];
-        $postId      = $_POST['postId'];
-        $comment     = $_POST['comment'];
+        $commenterId = $_POST['commentId'];
 
-        $sql = 'INSERT INTO `comments` (`id`, `commenterId`, `postId`, `comment`, `timestamp`) VALUES (:id, :commenterId, :postId, :comment, :timestamp)';
+        $sql = "DELETE FROM `comments` WHERE `comments`.`id` =:id";
 
         $stmt = $connection->prepare($sql);
 
-        $stmt->execute(['id' => null, 'commenterId' => $commenterId, 'postId' => $postId, 'comment' => $comment, 'timestamp' => null]);
-        header('Location: ./logged.php');
+        $stmt->execute(['id' => $commenterId]);
+        header("Location: " . $_SERVER['HTTP_REFERER']);
 
     } catch (PDOException $e) {
         echo $sql . "<br>" . $e->getMessage();
     }
 }
 
+function deletePost()
+{
+    try {
+        session_start();
+        $connection = connect();
+        $postId     = $_POST['postId'];
+        $image      = $_POST['pictureName'];
+
+        unlink("./images/post/" . $image);
+
+        $sql = "DELETE FROM `posts` WHERE `posts`.`id` =:id";
+
+        $stmt = $connection->prepare($sql);
+
+        $stmt->execute(['id' => $postId]);
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
+function deleteUser()
+{
+    try {
+        session_start();
+        $connection = connect();
+        $userId     = $_POST['userId'];
+
+        $sql  = "SELECT * FROM posts WHERE posterId=:id";
+        $stmt = $connection->prepare($sql);
+        $stmt->execute(['id' => $userId]);
+        $posts = $stmt->fetchAll();
+
+        $ids = "";
+        foreach ($posts as $post) {
+            $ids .= "$post->id,";
+            unlink("./images/post/" . $post->pictureName);
+        }
+
+        $ids = "(" . rtrim($ids, ',') . ")";
+        var_dump($ids);
+        $sql = "DELETE  FROM `comments` WHERE `comments`.`postId` IN $ids";
+
+        $stmt = $connection->prepare($sql);
+
+        $stmt->execute();
+
+        $sql_posts   = "DELETE FROM `posts` WHERE `posts`.`posterId` =:id;";
+        $sql_friends = "DELETE FROM `friends` WHERE `friends`.`userId` =:id OR `friends`.`friendId` =:id;";
+        $sql_user    = "DELETE FROM `users` WHERE `users`.`id` =:id;";
+
+        $sql  = $sql_posts . $sql_friends . $sql_user;
+        $stmt = $connection->prepare($sql);
+
+        $stmt->execute(['id' => $userId]);
+
+        logOutUser();
+
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+}
+
+function unfriend(){
+
+    try {
+        session_start();
+        $id = $_POST['id'];
+        $connection = connect();
+        $sql = "DELETE FROM `friends` WHERE `friends`.`id` =:id";
+
+        $stmt = $connection->prepare($sql);
+
+        $stmt->execute(['id' => $id]);
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+
+    } catch (PDOException $e) {
+        echo $sql . "<br>" . $e->getMessage();
+    }
+
+
+}
+
 end($_REQUEST);
 $request = key($_REQUEST);
 
-var_dump($request);
 switch ($request) {
     case 'login-button':
         logInUser();
@@ -331,6 +470,9 @@ switch ($request) {
     case 'befriend-button':
         befriend();
         break;
+    case 'unfriend-button':
+        unfriend();
+        break;
     case 'post-button':
         post();
         break;
@@ -339,6 +481,15 @@ switch ($request) {
         break;
     case 'comment-button':
         comment();
+        break;
+    case 'delete-comment-button':
+        deleteComment();
+        break;
+    case 'delete-post-button':
+        deletePost();
+        break;
+    case 'delete-user-button':
+        deleteUser();
         break;
     default;
         header('Location: ./index.php');

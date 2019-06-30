@@ -1,6 +1,6 @@
 <?php
 session_start();
-
+require_once "./util/errorExists.php";
 if (!isset($_SESSION["isLoggedIn"])) {
     header('Location: ./index.php');
 }
@@ -9,23 +9,19 @@ $userId = $_SESSION["userId"];
 require "./connect.php";
 $connection = connect();
 
-$friends = [];
-$sql     = "SELECT friendId,friendName FROM friends WHERE userId=$userId";
+$sql = "SELECT * FROM `friends` WHERE `friends`.`userId` =:id OR `friends`.`friendId` =:id;";
 
 $stmt = $connection->prepare($sql);
 
-$stmt->execute();
+$stmt->execute(['id' => $userId]);
 $friends = $stmt->fetchAll();
 
-$sql = "SELECT userId,friendName FROM friends WHERE friendId=$userId";
-
-$stmt = $connection->prepare($sql);
-
-$stmt->execute();
-
-$friends = array_merge($friends, $stmt->fetchAll());
-
 $connection = null;
+
+if (!isset($_SESSION['errors'])) {
+
+    $_SESSION['errors'] = ['comment' => false, 'post' => false, 'postImage' => false];
+}
 
 ?>
 <!DOCTYPE html>
@@ -48,38 +44,10 @@ $connection = null;
                 <?php require "./partials/posts.php"; ?>
             </main>
         </div>
-        <script>
-        const count = (e) => {
-            let input = e.target.value;
-            let length = input.length;
-            return length;
-        }
 
-        const write = (target, length) => {
-
-            let output = document.querySelector(`.${target}`);
-            output.innerText = length;
-        }
-
-        const handleCounting = (e) => {
-            let output = `${e.target.name}__counter`;
-            let length = count(e);
-            write(output, length);
-        }
-
-
-        const logger = (event) => {
-            let value = event.target.value;
-            console.log(value + " " + (typeof value));
-            if (value === "") {
-                console.log("nuffin");
-            }
-            let icon = document.querySelector(".fa-camera");
-            icon.style.color = "#067DBD";
-
-        }
-        </script>
-
+        <script src="./javascript/toggler.js"></script>
+        <script src="./javascript/validation.js"></script>
+        <script src="./javascript/counting.js"></script>
     </body>
 
 </html>

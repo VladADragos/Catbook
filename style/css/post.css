@@ -1,12 +1,12 @@
 .posts {
   display: flex;
-  flex-direction: column;
-  padding: 2.5rem 0rem; }
+  flex-direction: column; }
 
 .post {
   display: flex;
   margin-bottom: 6rem;
-  height: 55vh; }
+  height: 55vh;
+  position: relative; }
 
 .post-user {
   display: flex;
@@ -24,7 +24,6 @@
   display: flex;
   padding: 1.5rem 3rem;
   align-items: center;
-  position: relative;
   background: #F6F6F6; }
 
 .post-cont {
@@ -38,7 +37,7 @@
   align-items: baseline; }
 
 .post-timestamp {
-  margin-left: 2rem;
+  margin: 0rem 2rem;
   font-size: 1.5rem;
   color: #c2c2c2; }
 
@@ -76,7 +75,8 @@
 
 .comment {
   margin-top: 2rem;
-  display: flex; }
+  display: flex;
+  position: relative; }
 
 .comment-user {
   display: flex;
@@ -89,18 +89,21 @@
 
 .comment-user__name {
   font-size: 1.7rem;
-  color: #1d1d1d; }
+  color: #1d1d1d;
+  font-weight: 600; }
 
 .comment__text {
   margin-left: 1rem;
-  padding: 1rem;
+  padding: 1rem 1rem 3rem 1rem;
   font-size: 1.3rem;
   border-radius: 5%;
   width: 100%;
   background: #fff;
-  color: #1d1d1d; }
+  color: #1d1d1d;
+  position: relative; }
 
 .comment-form {
+  position: relative;
   font-size: 2rem;
   width: 100%; }
 
@@ -110,7 +113,8 @@
 
 .comment-form__bottom {
   display: flex;
-  justify-content: space-between; }
+  justify-content: space-between;
+  flex-direction: row-reverse; }
 
 .button--comment {
   padding: 1rem;
@@ -118,3 +122,13 @@
 
 .comment-form__letter-counter {
   font-size: 2rem; }
+
+.button--comment--delete {
+  background: none;
+  display: inline; }
+
+.delete-comment-form {
+  display: inline;
+  position: absolute;
+  bottom: 0%;
+  right: 0%; }

@@ -42,22 +42,6 @@ $userId = $_SESSION["userId"];
                     <input autocomplete="off" type="password" name="password" class="form-input register-form__input"
                         form="register-form" />
                 </div>
-                <div class="input-container margin--top">
-                    <label for="password" class="form-label register-form__label">
-                        Email
-                    </label>
-                    <input autocomplete="off" type="text" value="<?php echo ($_SESSION["email"]); ?>" name="email"
-                        class="form-input register-form__input" form="register-form" />
-                </div>
-
-                <div class="input-container margin--top">
-                    <label for="password" class="form-label register-form__label">
-                        Phone number
-                    </label>
-                    <input autocomplete="off" type="text" value="<?php echo ($_SESSION["phoneNumber"]); ?>"
-                        name="phoneNumber" class="form-input register-form__input" form="register-form" />
-                </div>
-
                 <input autocomplete="off" type="hidden" value="<?php echo ($_SESSION["userId"]); ?>" name="id"
                     class="form-input register-form__input" form="register-form" />
                 <button type="submit" name="edit-button" class="button button--primary button--register">
