@@ -1,5 +1,5 @@
 # Catbook, the cat themed social network
-##finished working version 1.0
+## finished working version 1.0
 
 [website](www.catbook.se)
 
